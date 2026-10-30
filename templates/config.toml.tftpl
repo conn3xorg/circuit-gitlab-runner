@@ -1,0 +1,20 @@
+# Written by Conn3x. Changes here are overwritten on the next apply.
+concurrent = ${concurrent}
+check_interval = 0
+shutdown_timeout = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = ${jsonencode(name)}
+  url = ${jsonencode(url)}
+  token = ${jsonencode(token)}
+  executor = ${jsonencode(executor)}
+  request_concurrency = ${request_concurrency}
+%{ if executor == "docker" ~}
+  [runners.docker]
+    image = ${jsonencode(docker_image)}
+    privileged = false
+    volumes = ["/cache"]
+%{ endif ~}
