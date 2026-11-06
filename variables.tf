@@ -63,6 +63,7 @@ variable "runner_token" {
 variable "runner_version" {
   type        = string
   default     = "19.5.2"
+  nullable    = false
   description = "GitLab Runner release to install, such as \"19.5.2\". Raising it upgrades the runner in place. Keep it within a minor release or so of your GitLab."
 
   validation {

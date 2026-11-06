@@ -17,6 +17,13 @@ variable "runner_token" {
   sensitive = true
 }
 
+# CI sets this to install an older runner first, then upgrades to the
+# circuit's own pin by applying again without it.
+variable "runner_version" {
+  type    = string
+  default = null
+}
+
 module "gitlab_runner" {
   source = "../.."
 
@@ -25,9 +32,10 @@ module "gitlab_runner" {
   ssh_private_key_file = "./id_ed25519"
   ssh_known_hosts_file = "./known_hosts"
 
-  gitlab_url   = var.gitlab_url
-  runner_token = var.runner_token
-  concurrent   = 2
+  gitlab_url     = var.gitlab_url
+  runner_token   = var.runner_token
+  concurrent     = 2
+  runner_version = var.runner_version
 }
 
 output "config_file" {

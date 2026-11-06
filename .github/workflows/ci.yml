@@ -119,6 +119,40 @@ jobs:
           journalctl -u gitlab-runner --since "$since" -o cat | sed 's/\x1b\[[0-9;]*m//g' | grep -q 'Configuration loaded.*max_builds=2'
           EOF
           conn3x plan -detailed-exitcode
+      # A fresh host gets the previous release, then the circuit's own pin is
+      # applied over it, the way someone raises runner_version. Both packages
+      # have to move together, and the runner has to load its config again.
+      - name: Upgrade from GitLab Runner 19.5.1 on a fresh host, then plan again with no changes
+        working-directory: examples/local
+        env:
+          CONTAINERFILE: ${{ github.workspace }}/conn3x/test/images/${{ matrix.distro }}/Containerfile
+          PODMAN: sudo podman
+          TF_VAR_runner_token: glrt-ci-only-not-a-real-token
+        run: |
+          cat > version.sh <<'EOF'
+          if command -v dpkg-query >/dev/null; then
+            dpkg-query -W -f '${Version} ' gitlab-runner gitlab-runner-helper-images
+          else
+            rpm -q --qf '%{VERSION}-1 ' gitlab-runner gitlab-runner-helper-images
+          fi
+          EOF
+          ./down.sh
+          ./up.sh
+          conn3x init
+          conn3x apply -auto-approve -var runner_version=19.5.1
+          test "$(sudo podman exec -i circuit-gitlab-runner sh < version.sh)" = "19.5.1-1 19.5.1-1 "
+          since=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          conn3x apply -auto-approve
+          conn3x plan -detailed-exitcode
+          test "$(sudo podman exec -i circuit-gitlab-runner sh < version.sh)" = "19.5.2-1 19.5.2-1 "
+          sudo podman exec -i -e since="$since" circuit-gitlab-runner sh -eu <<'EOF'
+          for _ in $(seq 30); do
+            journalctl -u gitlab-runner --since "$since" -o cat | sed 's/\x1b\[[0-9;]*m//g' | grep -q 'Configuration loaded.*max_builds=2' && break
+            sleep 1
+          done
+          systemctl is-active gitlab-runner
+          journalctl -u gitlab-runner --since "$since" -o cat | sed 's/\x1b\[[0-9;]*m//g' | grep -q 'Configuration loaded.*max_builds=2'
+          EOF
       - name: Clean up
         if: always()
         working-directory: examples/local
