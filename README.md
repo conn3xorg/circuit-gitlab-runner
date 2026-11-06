@@ -18,7 +18,7 @@ variable "runner_token" {
 }
 
 module "gitlab_runner" {
-  source = "github.com/conn3xorg/circuit-gitlab-runner?ref=v0.1.1"
+  source = "github.com/conn3xorg/circuit-gitlab-runner?ref=v0.1.2"
 
   hosts                = { ci1 = "203.0.113.20", ci2 = "203.0.113.21" }
   ssh_private_key_file = "~/.ssh/id_ed25519"
@@ -77,7 +77,7 @@ module "docker" {
 }
 
 module "gitlab_runner" {
-  source     = "github.com/conn3xorg/circuit-gitlab-runner?ref=v0.1.1"
+  source     = "github.com/conn3xorg/circuit-gitlab-runner?ref=v0.1.2"
   depends_on = [module.docker]
 
   hosts                = { ci1 = { address = "203.0.113.20", os = "ubuntu" } }
